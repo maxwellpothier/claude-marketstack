@@ -10,19 +10,16 @@ import (
 
 var ticker = "AAPL"
 
-// func init() {
-// 	if err := godotenv.Load(); err != nil {
-// 		log.Println("Error loading .env file")
-// 	}
-// }
-
 func main() {
 	stockResponse, err := marketapi.GetStockData(ticker)
 	if err != nil {
 		log.Println(err)
 	}
-	fmt.Println(stockResponse.Ticker)
 
-	// test := claude.GetInfoBreakdown(stockResponse)
-	claude.GetInfoBreakdown(stockResponse)
+	claudeResponse, err := claude.GetInfoBreakdown(stockResponse)
+	if err != nil {
+		log.Println(err)
+	}
+
+	fmt.Println(claudeResponse)
 }

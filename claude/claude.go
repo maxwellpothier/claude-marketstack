@@ -3,6 +3,7 @@ package claude
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -13,7 +14,6 @@ import (
 	"maxpothier.com/go/api/v2/model"
 )
 
-var apiUrl string
 var baseUrl = "https://api.anthropic.com/v1/messages"
 
 func init() {
@@ -22,19 +22,11 @@ func init() {
 	}
 }
 
-func init() {
-	apiKey := os.Getenv("CLAUDE_API_KEY")
-	if apiKey == "" {
-		panic("CLAUDE_API_KEY is not set")
-	}
-	apiUrl = fmt.Sprintf("http://api.marketstack.com/v1/eod?access_key=%s&symbols=%%s", apiKey)
-}
-
-func GetInfoBreakdown(stock *model.StockData) {
+func GetInfoBreakdown(stock *model.StockData) (string, error) {
 	apiKey := os.Getenv("CLAUDE_API_KEY")
 
 	if apiKey == "" {
-		panic("CLAUDE_API_KEY is not set")
+		return "", errors.New("CLAUDE_API_KEY is not set")
 	}
 
 	requestBody := map[string]interface{}{
@@ -43,19 +35,19 @@ func GetInfoBreakdown(stock *model.StockData) {
 		"messages": 	[]map[string]string{
 			{
 				"role": "user",
-				"content": fmt.Sprintf("Tell me about %s in two sentences", stock.Ticker),
+				"content": fmt.Sprintf("Tell me about %s in two sentences. Here is the raw data from the stock market API for this stock:\n\n%s", stock.Ticker, stock.Data),
 			},
 		},
 	}
 
 	jsonData, err := json.Marshal(requestBody)
 	if err != nil {
-		panic(fmt.Errorf("error marshaling JSON: %v", err))
+		return "", fmt.Errorf("error marshaling JSON: %v", err)
 	}
 
 	req, err := http.NewRequest("POST", baseUrl, bytes.NewBuffer(jsonData))
 	if err != nil {
-		panic(fmt.Errorf("error creating request: %v", err))
+		return "", fmt.Errorf("error creating request: %v", err)
 	}
 
 	req.Header.Set("x-api-key", apiKey)
@@ -65,13 +57,13 @@ func GetInfoBreakdown(stock *model.StockData) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(fmt.Errorf("error sending request: %v", err))
+		return "", fmt.Errorf("error sending request: %v", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		panic(fmt.Errorf("error reading response: %v", err))
+		return "", fmt.Errorf("error reading response: %v", err)
 	}
 
 	var response struct {
@@ -83,12 +75,12 @@ func GetInfoBreakdown(stock *model.StockData) {
 
 	err = json.Unmarshal(body, &response)
 	if err != nil {
-		panic(fmt.Errorf("error unmarshaling JSON: %v", err))
+		return "", fmt.Errorf("error unmarshaling JSON: %v", err)
 	}
 
 	if len(response.Content) > 0 {
-		fmt.Println(response.Content[0].Text)
+		return response.Content[0].Text, nil
 	} else {
-		fmt.Println("No content in the response")
+		return "", errors.New("no content in the response")
 	}
 }

@@ -20,16 +20,20 @@ This project is a Go-based API that provides stock market data analysis. It fetc
 
 1. Clone the repository
 2. Create a `.env` file in the root directory with the following content:
-    - CLAUDE_API_KEY=your_claude_api_key
-    - MARKETSTACK_API_KEY=your_marketstack_api_key
+
+```
+CLAUDE_API_KEY=your_claude_api_key
+MARKETSTACK_API_KEY=your_marketstack_api_key
+```
+
 3. Install dependencies:
-    - go mod download
+    - `go mod download`
 
 ### Running the Application
 
 1. Start the server:
 
-    - go run main.go
+    - `go run main.go`
 
 2. The server will start on `localhost:8080`.
 
